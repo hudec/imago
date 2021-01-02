@@ -303,7 +303,11 @@ func (c *Config) getUpdates(configContainers []configAnnotationImageSpec, contai
 			log.Printf("    %s unable to get digest: %s", container.Name, err)
 			continue
 		}
-		image := strings.Split(container.Image, ":")[0] + "@" + digest
+		imageParts := strings.Split(container.Image, ":")
+		image := imageParts[0] + "@" + digest
+		if len(imageParts) > 2 {
+			image = imageParts[0] + ":" + imageParts[1] + "@" + digest
+		}
 		for _, specContainer := range containers {
 			if specContainer.Name != container.Name {
 				continue
@@ -599,12 +603,12 @@ func main() {
 	flag.Var(&namespace, "n", "Check deployments and daemonsets in given namespaces (default to current namespace)")
 	flag.Var(&xnamespace, "x", "Check deployments and daemonsets in all namespaces except given namespaces (implies --all-namespaces)")
 	flag.StringVar(&labelSelector, "l", "", "Kubernetes labels selectors\nWarning: applies to Deployment, DaemonSet, StatefulSet and CronJob, not pods !")
-	flag.StringVar(&fieldSelector, "field-selector", "", "Kubernetes field-selector\nexample: metadata.name=myapp")
+	flag.StringVar(&fieldSelector, "f", "", "Kubernetes field-selector\nexample: metadata.name=myapp")
 	flag.BoolVar(&allnamespaces, "all-namespaces", false, "Check deployments and daemonsets on all namespaces (default false)")
 	flag.BoolVar(&allnamespaces, "A", false, "Check deployments and daemonsets on all namespaces (shorthand) (default false)")
 	flag.BoolVar(&update, "update", false, "update deployments and daemonsets to use newer images (default false)")
 	flag.BoolVar(&restart, "restart", false, "rollout restart deployments and daemonsets to use newer images, implies -check-pods and assume imagePullPolicy is Always (default false)")
-	flag.BoolVar(&checkpods, "check-pods", false, "check image digests of running pods (default false)")
+	flag.BoolVar(&checkpods, "c", false, "check image digests of running pods (default false)")
 	flag.Parse()
 	if allnamespaces && len(namespace) > 0 {
 		log.Fatal("You can't use -n with --all-namespaces")

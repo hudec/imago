@@ -41,11 +41,11 @@ image in manifests untouched.
 	  -A	Check deployments and daemonsets on all namespaces (shorthand) (default false)
 	  -all-namespaces
 			Check deployments and daemonsets on all namespaces (default false)
-	  -check-pods
+	  -c
 			check image digests of running pods (default false)
 	  -docker-config string
 			docker config file for pulling latest digests (default ~/.docker/config.json)
-	  -field-selector string
+	  -f string
 			Kubernetes field-selector
 			example: metadata.name=myapp
 	  -kubeconfig string

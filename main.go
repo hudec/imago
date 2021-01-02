@@ -39,6 +39,7 @@ import (
 
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/manifest"
+	"github.com/docker/distribution/reference"
 )
 
 func closeResource(r io.Closer) {
@@ -93,7 +94,7 @@ type Config struct {
 }
 
 // NewConfig initialize a new imago config
-func NewConfig(kubeconfig string, namespace string, allnamespaces bool, xnamespace *arrayFlags, policy string, checkpods bool, ctx context.Context) (*Config, error) {
+func NewConfig(ctx context.Context, kubeconfig string, namespace string, allnamespaces bool, xnamespace *arrayFlags, policy string, checkpods bool) (*Config, error) {
 	c := &Config{policy: policy, checkpods: checkpods, xnamespace: xnamespace, context: ctx}
 	var err error
 	var clusterConfig *rest.Config
@@ -303,11 +304,12 @@ func (c *Config) getUpdates(configContainers []configAnnotationImageSpec, contai
 			log.Printf("    %s unable to get digest: %s", container.Name, err)
 			continue
 		}
-		imageParts := strings.Split(container.Image, ":")
-		image := imageParts[0] + "@" + digest
-		if len(imageParts) > 2 {
-			image = imageParts[0] + ":" + imageParts[1] + "@" + digest
+		ref, err := reference.ParseNormalizedNamed(container.Image)
+		if err != nil {
+			log.Printf("    %s unable to get digest: %s", container.Name, err)
+			continue
 		}
+		image := ref.Name() + "@" + digest
 		for _, specContainer := range containers {
 			if specContainer.Name != container.Name {
 				continue
@@ -628,7 +630,7 @@ func main() {
 	}
 	for _, ns := range namespace {
 		ctx := context.Background()
-		c, err := NewConfig(kubeconfig, ns, allnamespaces, &xnamespace, policy, checkpods, ctx)
+		c, err := NewConfig(ctx, kubeconfig, ns, allnamespaces, &xnamespace, policy, checkpods)
 		if err != nil {
 			log.Fatal(err)
 		}
